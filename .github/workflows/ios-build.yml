@@ -19,13 +19,16 @@ jobs:
 
       - name: Build Local IPA
         run: |
-          # Garante que o Xcode encontre o Node.js correto no ambiente virtual
-          export NODE_BINARY=$(which node)
-          ln -s "$(which node)" /usr/local/bin/node || true
-          
+          # Gera a pasta nativa do iOS primeiro
           npx expo prebuild --platform ios
-          cd ios
           
+          # Descobre onde o Node está e injeta direto na configuração interna que o Xcode lê
+          NODE_PATH=$(which node)
+          echo "export NODE_BINARY=$NODE_PATH" > ios/.xcode.env
+          echo "Conteúdo injetado no .xcode.env:"
+          cat ios/.xcode.env
+          
+          cd ios
           WORKSPACE_NAME=$(ls -d *.xcworkspace | head -n 1)
           SCHEME_NAME=$(basename "$WORKSPACE_NAME" .xcworkspace)
           
