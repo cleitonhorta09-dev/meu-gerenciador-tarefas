@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "f673f400-b189-4c8f-aea5-dd7ee6185576"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.cleitonqueto.meugerenciadortarefas",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
