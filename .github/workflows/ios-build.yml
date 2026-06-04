@@ -22,17 +22,17 @@ jobs:
           npx expo prebuild --platform ios
           cd ios
           
-          # Descobre automaticamente o nome exato do Workspace e do Scheme gerados pelo Expo
           WORKSPACE_NAME=$(ls -d *.xcworkspace | head -n 1)
           SCHEME_NAME=$(basename "$WORKSPACE_NAME" .xcworkspace)
           
           echo "Compilando o esquema: $SCHEME_NAME usando o workspace: $WORKSPACE_NAME"
           
-          xcodebuild -workspace "$WORKSPACE_NAME" -scheme "$SCHEME_NAME" -configuration Release -sdk iphoneos -allowProvisioningUpdates=NO CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
+          # Força o Xcode a salvar os arquivos dentro da pasta 'build' local
+          xcodebuild -workspace "$WORKSPACE_NAME" -scheme "$SCHEME_NAME" -configuration Release -sdk iphoneos -derivedDataPath build -allowProvisioningUpdates=NO CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
           
           cd ..
           mkdir -p Payload
-          cp -r ios/build/Release-iphoneos/*.app Payload/
+          cp -r ios/build/Build/Products/Release-iphoneos/*.app Payload/
           zip -r meu-gerenciador-real.ipa Payload
           rm -rf Payload
 
