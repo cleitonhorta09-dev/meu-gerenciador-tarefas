@@ -19,14 +19,17 @@ jobs:
 
       - name: Build Local IPA
         run: |
-          # Gera a pasta nativa do iOS primeiro
+          # Descobre onde o Node está e injeta na configuração que o Xcode lê
+          NODE_PATH=$(which node)
+          
+          # Ativa o modo offline do Expo para evitar travas no app.config/manifest
+          export EXPO_OFFLINE=1
+          
           npx expo prebuild --platform ios
           
-          # Descobre onde o Node está e injeta direto na configuração interna que o Xcode lê
-          NODE_PATH=$(which node)
+          # Injeta o Node.js no arquivo de ambiente gerado
           echo "export NODE_BINARY=$NODE_PATH" > ios/.xcode.env
-          echo "Conteúdo injetado no .xcode.env:"
-          cat ios/.xcode.env
+          echo "export EXPO_OFFLINE=1" >> ios/.xcode.env
           
           cd ios
           WORKSPACE_NAME=$(ls -d *.xcworkspace | head -n 1)
