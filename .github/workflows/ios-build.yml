@@ -19,6 +19,10 @@ jobs:
 
       - name: Build Local IPA
         run: |
+          # Garante que o Xcode encontre o Node.js correto no ambiente virtual
+          export NODE_BINARY=$(which node)
+          ln -s "$(which node)" /usr/local/bin/node || true
+          
           npx expo prebuild --platform ios
           cd ios
           
@@ -27,7 +31,6 @@ jobs:
           
           echo "Compilando o esquema: $SCHEME_NAME usando o workspace: $WORKSPACE_NAME"
           
-          # Força o Xcode a salvar os arquivos dentro da pasta 'build' local
           xcodebuild -workspace "$WORKSPACE_NAME" -scheme "$SCHEME_NAME" -configuration Release -sdk iphoneos -derivedDataPath build -allowProvisioningUpdates=NO CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
           
           cd ..
