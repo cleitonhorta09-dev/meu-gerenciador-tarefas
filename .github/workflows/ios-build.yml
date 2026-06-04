@@ -12,23 +12,32 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-size: 18
+          node-version: 18
 
       - name: Install Dependencies
         run: npm install
-
-      - name: Setup Expo
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build Local IPA
         run: |
           npx expo prebuild --platform ios
           cd ios
-          xcodebuild -workspace *.xcworkspace -scheme * -configuration Release -sdk iphoneos -allowProvisioningUpdates=NO CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
-          mkdir -p ../Payload
-          mv build/Release-iphoneos/*.app ../Payload/
+          
+          # Descobre automaticamente o nome exato do Workspace e do Scheme gerados pelo Expo
+          WORKSPACE_NAME=$(ls -d *.xcworkspace | head -n 1)
+          SCHEME_NAME=$(basename "$WORKSPACE_NAME" .xcworkspace)
+          
+          echo "Compilando o esquema: $SCHEME_NAME usando o workspace: $WORKSPACE_NAME"
+          
+          xcodebuild -workspace "$WORKSPACE_NAME" -scheme "$SCHEME_NAME" -configuration Release -sdk iphoneos -allowProvisioningUpdates=NO CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
+          
           cd ..
+          mkdir -p Payload
+          cp -r ios/build/Release-iphoneos/*.app Payload/
           zip -r meu-gerenciador-real.ipa Payload
+          rm -rf Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: meu-gerenciador-ipa
+          path: meu-gerenciador-real.ipa
