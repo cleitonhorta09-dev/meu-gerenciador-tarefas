@@ -19,17 +19,19 @@ jobs:
 
       - name: Build Local IPA
         run: |
-          # Descobre onde o Node está e injeta na configuração que o Xcode lê
           NODE_PATH=$(which node)
-          
-          # Ativa o modo offline do Expo para evitar travas no app.config/manifest
           export EXPO_OFFLINE=1
           
+          # Gera o projeto nativo do iOS
           npx expo prebuild --platform ios
           
-          # Injeta o Node.js no arquivo de ambiente gerado
+          # Injeta o Node nas configurações internas
           echo "export NODE_BINARY=$NODE_PATH" > ios/.xcode.env
           echo "export EXPO_OFFLINE=1" >> ios/.xcode.env
+          
+          # PULO DO GATO: Altera os arquivos do projeto para desativar codesign em TODAS as dependências/pods
+          sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' ios/*.xcodeproj/project.pbxproj || true
+          sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' ios/*.xcodeproj/project.pbxproj || true
           
           cd ios
           WORKSPACE_NAME=$(ls -d *.xcworkspace | head -n 1)
@@ -37,7 +39,18 @@ jobs:
           
           echo "Compilando o esquema: $SCHEME_NAME usando o workspace: $WORKSPACE_NAME"
           
-          xcodebuild -workspace "$WORKSPACE_NAME" -scheme "$SCHEME_NAME" -configuration Release -sdk iphoneos -derivedDataPath build -allowProvisioningUpdates=NO CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build
+          # Executa o build com todas as travas de validação e empacotamento desligadas
+          xcodebuild -workspace "$WORKSPACE_NAME" \
+            -scheme "$SCHEME_NAME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            clean build
           
           cd ..
           mkdir -p Payload
